@@ -1,27 +1,37 @@
-from .models import Book
-from .services import (
-    BookDisplayService,
-    BookPrintService,
-    BookSerializationService,
-    BookProcessor
-)
+from app.book import Book
+from app.displayers import ConsoleDisplayer, ReverseDisplayer
+from app.printers import ConsolePrinter, ReversePrinter
+from app.serializers import JSONSerializer, XMLSerializer
+
+Displayers = {
+    "console": ConsoleDisplayer,
+    "reverse": ReverseDisplayer,
+}
+
+Printers = {
+    "console": ConsolePrinter,
+    "reverse": ReversePrinter,
+}
+
+Serializers = {
+    "xml": XMLSerializer,
+    "json": JSONSerializer,
+}
 
 
-def main(book: Book, commands: list[tuple[str, str]]) -> str | None:
-    display_service = BookDisplayService()
-    print_service = BookPrintService()
-    serialization_service = BookSerializationService()
-    processor = BookProcessor(
-        display_service,
-        print_service,
-        serialization_service
-    )
+def main(book: Book, commands: list[tuple[str, str]]) -> None | str:
+    for cmd, method_type in commands:
+        if cmd == "display":
+            displayer = Displayers[method_type]()
+            displayer.display(book)
+        elif cmd == "print":
+            printer = Printers[method_type]()
+            printer.print_book(book)
+        elif cmd == "serialize":
+            serializer = Serializers[method_type]()
+            return serializer.serialize(book)
 
-    return processor.process_commands(book, commands)
 
-
-if __name__ == "__main__":
-    sample_book = Book("Sample Book", "This is some sample content.")
-    result = main(sample_book, [("display", "reverse"), ("serialize", "xml")])
-    print(result)
-    
+    if __name__ == "__main__":
+        sample_book = Book("Sample Book", "This is some sample content.")
+    print(main(sample_book, [("display", "reverse"), ("serialize", "xml")]))
